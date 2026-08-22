@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Registro de Salida Logo Rojo</title>
+<style>
+  :root{
+    --graphite:#1C2128;
+    --graphite-2:#2A313C;
+    --paper:#F5F6F7;
+    --orange:#E8541E;
+    --orange-dark:#C4430F;
+    --ok:#2E7D4F;
+    --line:#DADFE3;
+    --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:transparent; font-family:var(--sans); color:var(--graphite); }
+  body{ min-height:100vh; display:flex; justify-content:center; padding:0; }
+
+  .wrap{ width:100%; max-width:480px; }
+
+  .label{
+    background:var(--graphite);
+    color:var(--paper);
+    padding:22px 24px 20px;
+    border-radius:14px 14px 0 0;
+    position:relative;
+    overflow:hidden;
+  }
+  .label::after{
+    content:"";
+    position:absolute; right:-30px; top:-30px; width:120px; height:120px;
+    background:var(--orange); opacity:.15; border-radius:50%;
+  }
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--orange); margin:0 0 6px;
+  }
+  .prod-name{ font-size:22px; font-weight:800; margin:0 0 10px; line-height:1.15; }
+  .code-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .code-chip{
+    font-family:var(--mono); font-size:12.5px; background:var(--graphite-2);
+    border:1px solid #3A4451; padding:5px 10px; border-radius:6px; color:#C9CED4;
+  }
+
+  .card{
+    background:#fff; border:1px solid var(--line); border-top:none;
+    border-radius:0 0 14px 14px; padding:22px 24px 26px;
+  }
+
+  .field{ margin-bottom:16px; position:relative; }
+  .field label{
+    display:block; font-size:13px; font-weight:700; margin-bottom:6px; color:var(--graphite);
+  }
+  .field .hint{ font-weight:400; color:#8A939C; font-size:12px; }
+  select, input[type="number"], input[type="text"]{
+    width:100%; padding:13px 12px; border:1.5px solid var(--line); border-radius:9px;
+    font-size:16px; font-family:var(--sans); background:#fff; color:var(--graphite);
+    appearance:none; -webkit-appearance:none;
+  }
+  select{
+    background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238A939C' stroke-width='2'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat:no-repeat; background-position:right 12px center; background-size:18px;
+    padding-right:36px;
+  }
+  select:focus, input:focus{ outline:none; border-color:var(--orange); box-shadow:0 0 0 3px rgba(232,84,30,.15); }
+  select.invalid, input.invalid{ border-color:#C4430F; box-shadow:0 0 0 3px rgba(196,67,15,.12); }
+
+  .today{ font-size:13px; color:#8A939C; margin:-4px 0 18px; }
+
+  button.primary{
+    width:100%; padding:15px; border:none; border-radius:10px; background:var(--orange);
+    color:#fff; font-size:16px; font-weight:800; cursor:pointer; letter-spacing:.01em;
+    transition:background .15s ease;
+  }
+  button.primary:active{ background:var(--orange-dark); }
+  button.primary:disabled{ background:#D8B7AA; cursor:not-allowed; }
+
+  .error-msg{ color:#C4430F; font-size:12.5px; margin-top:4px; display:none; }
+
+  .success{
+    text-align:center; padding:10px 4px 4px;
+  }
+  .success .check{
+    width:52px; height:52px; border-radius:50%; background:var(--ok); color:#fff;
+    display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:26px;
+  }
+  .success h2{ font-size:18px; margin:0 0 6px; }
+  .success p{ font-size:13.5px; color:#6B7480; margin:0 0 20px; }
+  .success .summary{
+    background:var(--paper); border-radius:10px; padding:14px 16px; text-align:left;
+    font-size:13.5px; margin-bottom:20px;
+  }
+  .success .summary div{ display:flex; justify-content:space-between; padding:3px 0; }
+  .success .summary span:first-child{ color:#6B7480; }
+  .success .summary span:last-child{ font-weight:700; }
+  button.secondary{
+    width:100%; padding:13px; border:1.5px solid var(--line); border-radius:10px; background:#fff;
+    color:var(--graphite); font-size:14.5px; font-weight:700; cursor:pointer;
+  }
+
+  .admin-toggle{
+    text-align:center; margin-top:14px;
+  }
+  .admin-toggle button{
+    background:none; border:none; color:#8A939C; font-size:12px; text-decoration:underline;
+    cursor:pointer; font-family:var(--sans);
+  }
+
+  .admin-panel{
+    margin-top:16px; border-top:1px dashed var(--line); padding-top:16px; display:none;
+  }
+  .admin-panel.open{ display:block; }
+  .admin-panel h3{ font-size:13px; margin:0 0 10px; color:#6B7480; text-transform:uppercase; letter-spacing:.06em; }
+  .log-row{
+    display:flex; justify-content:space-between; gap:8px; font-size:12.5px;
+    padding:8px 0; border-bottom:1px solid #EEF0F2;
+  }
+  .log-row .who{ color:#6B7480; }
+  .log-empty{ font-size:13px; color:#8A939C; padding:10px 0; }
+  .admin-actions{ display:flex; gap:8px; margin-top:12px; }
+  .admin-actions button{
+    flex:1; padding:9px; font-size:12.5px; border-radius:8px; border:1.5px solid var(--line);
+    background:#fff; cursor:pointer; font-weight:700; color:var(--graphite);
+  }
+  .toast{
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+    background:var(--graphite); color:#fff; padding:9px 16px; border-radius:8px; font-size:12.5px;
+    opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .toast.show{ opacity:1; }
+
+  /* Combobox con autocompletado tipo Excel */
+  .combo{ position:relative; }
+  .combo-list{
+    position:absolute; z-index:20; top:calc(100% + 4px); left:0; right:0;
+    background:#fff; border:1.5px solid var(--line); border-radius:9px;
+    max-height:220px; overflow-y:auto; box-shadow:0 8px 24px rgba(0,0,0,.12);
+    display:none;
+  }
+  .combo-list.open{ display:block; }
+  .combo-option{
+    padding:10px 12px; font-size:14.5px; cursor:pointer; color:var(--graphite);
+  }
+  .combo-option mark{ background:rgba(232,84,30,.18); color:inherit; border-radius:2px; }
+  .combo-option.active{ background:var(--paper); }
+  .combo-option:hover{ background:var(--paper); }
+  .combo-empty{ padding:10px 12px; font-size:13px; color:#8A939C; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="label">
+    <p class="eyebrow">Salida de bodega</p>
+    <p class="prod-name">LOGO ROJO</p>
+    <div class="code-row">
+      <span class="code-chip">N° 36-020-10-0036</span>
+      <span class="code-chip">CÓDIGO LOGO ROJO</span>
+    </div>
+  </div>
+
+  <div class="card">
+
+    <div id="formView">
+      <div class="today" id="todayLine"></div>
+
+      <div class="field">
+        <label for="cantidad">Cantidad</label>
+        <input type="number" id="cantidad" min="1" step="1" placeholder="Ej: 2" inputmode="numeric" />
+        <div class="error-msg" id="err-cantidad">Ingresa una cantidad válida (mayor a 0).</div>
+      </div>
+
+      <div class="field combo" id="entregaCombo">
+        <label for="entrega">Quién entrega <span class="hint">(escribe para buscar)</span></label>
+        <input type="text" id="entrega" autocomplete="off" placeholder="Escribe un nombre…" />
+        <div class="combo-list" id="entregaList"></div>
+        <div class="error-msg" id="err-entrega">Selecciona un nombre válido de la lista.</div>
+      </div>
+
+      <div class="field combo" id="retiraCombo">
+        <label for="retira">Quién retira <span class="hint">(escribe para buscar)</span></label>
+        <input type="text" id="retira" autocomplete="off" placeholder="Escribe un nombre…" />
+        <div class="combo-list" id="retiraList"></div>
+        <div class="error-msg" id="err-retira">Selecciona un nombre válido de la lista.</div>
+      </div>
+
+      <button class="primary" id="submitBtn">Registrar salida</button>
+    </div>
+
+    <div id="successView" class="success" style="display:none;">
+      <div class="check">✓</div>
+      <h2>Salida registrada</h2>
+      <p>Queda guardada para traspasar a la planilla de inventario.</p>
+      <div class="summary" id="summaryBox"></div>
+      <button class="secondary" id="anotherBtn">Registrar otra salida</button>
+    </div>
+
+    <div class="admin-toggle">
+      <button id="toggleAdmin">Ver historial de esta app (respaldo)</button>
+    </div>
+
+    <div class="admin-panel" id="adminPanel">
+      <h3>Salidas registradas desde este celular/app</h3>
+      <p style="font-size:12px;color:#8A939C;margin:-4px 0 12px;">Esto es solo un respaldo local. Los datos reales ya quedaron guardados automáticamente en la hoja SALIDAS del Excel en SharePoint.</p>
+      <div id="logList"><div class="log-empty">Cargando…</div></div>
+      <div class="admin-actions">
+        <button id="copyBtn">Copiar (por si acaso)</button>
+        <button id="csvBtn">Descargar CSV (por si acaso)</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Listado de personas de bodega para "Quién entrega"
+const ENTREGA_NAMES = ["Felipe Condon","Juan Vergara","Karen Navarro","Ricardo Muñoz","Lorena Hernandez","Stefany Valdes","Sebastián Miranda","Benjamín Catalan","Tiare Gonzales","Yanin Aros"];
+
+// Listado de personas que pueden figurar en "Quién retira" (deduplicado)
+const RETIRA_NAMES_RAW = [
+"Fabian Bascuñán","Felipe Condon","Enzo Bravo","Ana Carranza","Juan Vergara","Guillermo Montero",
+"Manuel Astudillo","Sasha Contreras","Ricardo Muñoz","Christopher Cordero","Jorge Garrido","Helen López",
+"Matias Vidal","Tiare Gonzalez","Jorge Gutierrez","Maxio Ahumada","Daniela Cifuentes","Camilo Muñoz",
+"Nicolás Quintana","Enzo Escobar","Karen Navarro","Oliver Pino","Nelsy Roa","Soraya Aguilera",
+"Miguel Orellana","Yuliana Jimenez","Luis Muñoz","Stefano Garrido","Ayline Gonzalez","Dominick Gonzalez",
+"Alejandra Ortíz","Génesis Valencia","Martín Venegas","Krishna Pérez","Ignacio Aravena","Catalina Cepeda",
+"Darwin Machado","Giovanni Díaz","Jazmín Tapia","Lorena Hernández","Kevin Vivas","Vicente Ortíz",
+"Dennis Guajardo","Carolina Vilugrón","Sebastián Miranda","Branco Coria","Ariel Rodríguez","Jerar Farias",
+"Alexander Rivera","Nicolás Muñoz","Esteban Loyola","Martina Vega","Aylin Piturra","Felipe Otazo",
+"Krishna Aguilera","Javiera Romero","Scarleth Ponce","Jayden Contreras","Denilzon Tapia","Francisca Miranda",
+"Valentina Carvajal","Stefany Valdes","Héctor Adonis","Joselyn Torres","Monserrat De Los Angeles","Carlos Tapia",
+"Maiky Olivera","Matias Vargas","Kevin Valenzuela","Alexander Valdes","Karla Taibo","Víctor Lugo",
+"Sofia Pallero","Gabriela Urrutia","Josefa Barra","Valentina Canales","Cristian Díaz","Anais Sandoval",
+"Matias Uribe","Bastian Gutierrez","Mateo Sanchez","Sofia Canales","Yordan Riquelme","Jean Cabrera",
+"Deinner Betancourt","Anais Espinoza","Dominique Sáez","Daniella Leiva","Andrés Uribe","Fabiola Cortes",
+"Camila Reyes","Jhael Pasten","Hector Santibañez","Dominique Pérez","Fermín Cepeda","Eric León",
+"Yanin Aros","Allan Fuenzalida","Emilio Cazo","Justin Ramirez","Mitchell Perdomo","Renato Vidal",
+"Jean Pierre Puño","Lucas Briseño","Barbara Segura","Esteban Caceres"
+];
+// Deduplicar preservando el orden
+const RETIRA_NAMES = [...new Set(RETIRA_NAMES_RAW)];
+
+const PRODUCT_NAME = "LOGO ROJO";
+const PRODUCT_CODE = "36-020-10-0036";
+const PRODUCT_FAMILY = "CÓDIGO LOGO ROJO";
+const STORAGE_KEY = "salidas_logo_rojo";
+
+// Flujo de Power Automate: escribe directo en la tabla SALIDAS del Excel en SharePoint
+const POWER_AUTOMATE_URL = "https://default4c5c9cf1d6be4ebbbab55a0f831527.e6.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/23/workflows/019de86806db456686336d5f075f488a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=_CkwXQF03HDsTU1Jj6TmHZ5unY4KFi4ETC6MQnDatmo";
+const FLOW_SECRET = "bodega2026-logorojo";
+
+const MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+
+function todayISO(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+function todayDisplay(){
+  const d = new Date();
+  return d.toLocaleDateString('es-CL', { day:'2-digit', month:'long', year:'numeric' });
+}
+
+document.getElementById('todayLine').textContent = "Fecha: " + todayDisplay();
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ---------- Combobox tipo Excel (reutilizable para "entrega" y "retira") ---------- */
+function normalize(str){
+  return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function highlightMatch(name, query){
+  if(!query) return name;
+  const idx = normalize(name).indexOf(normalize(query));
+  if(idx === -1) return name;
+  return name.slice(0, idx) + '<mark>' + name.slice(idx, idx + query.length) + '</mark>' + name.slice(idx + query.length);
+}
+
+function createCombo(inputId, listId, errId, names){
+  const inputEl = document.getElementById(inputId);
+  const listEl = document.getElementById(listId);
+  const errEl = document.getElementById(errId);
+  const state = { filtered: [], activeIndex: -1, valid: false };
+
+  function render(query){
+    const q = query.trim();
+    state.filtered = q === '' ? names : names.filter(n => normalize(n).includes(normalize(q)));
+    state.activeIndex = -1;
+
+    if(state.filtered.length === 0){
+      listEl.innerHTML = '<div class="combo-empty">Sin coincidencias. Revisa el nombre.</div>';
+    } else {
+      listEl.innerHTML = state.filtered.map((n, i) =>
+        `<div class="combo-option" data-index="${i}">${highlightMatch(n, q)}</div>`
+      ).join('');
+    }
+    listEl.classList.add('open');
+  }
+
+  function close(){ listEl.classList.remove('open'); }
+
+  function select(name){
+    inputEl.value = name;
+    state.valid = true;
+    inputEl.classList.remove('invalid');
+    errEl.style.display = 'none';
+    close();
+  }
+
+  function updateActiveOption(options){
+    options.forEach((o, i) => o.classList.toggle('active', i === state.activeIndex));
+    if(options[state.activeIndex]) options[state.activeIndex].scrollIntoView({ block:'nearest' });
+  }
+
+  inputEl.addEventListener('input', () => {
+    state.valid = names.some(n => normalize(n) === normalize(inputEl.value.trim()));
+    render(inputEl.value);
+  });
+  inputEl.addEventListener('focus', () => render(inputEl.value));
+  inputEl.addEventListener('blur', () => setTimeout(close, 150));
+  inputEl.addEventListener('keydown', (e) => {
+    if(!listEl.classList.contains('open')) return;
+    const options = listEl.querySelectorAll('.combo-option');
+    if(e.key === 'ArrowDown'){
+      e.preventDefault();
+      state.activeIndex = Math.min(state.activeIndex + 1, options.length - 1);
+      updateActiveOption(options);
+    } else if(e.key === 'ArrowUp'){
+      e.preventDefault();
+      state.activeIndex = Math.max(state.activeIndex - 1, 0);
+      updateActiveOption(options);
+    } else if(e.key === 'Enter'){
+      e.preventDefault();
+      if(state.activeIndex >= 0 && state.filtered[state.activeIndex]){
+        select(state.filtered[state.activeIndex]);
+      } else if(state.filtered.length === 1){
+        select(state.filtered[0]);
+      }
+    } else if(e.key === 'Escape'){
+      close();
+    }
+  });
+  listEl.addEventListener('mousedown', (e) => {
+    const opt = e.target.closest('.combo-option');
+    if(!opt) return;
+    select(state.filtered[parseInt(opt.dataset.index, 10)]);
+  });
+
+  return {
+    isValid: () => names.some(n => normalize(n) === normalize(inputEl.value.trim())),
+    normalizeToOfficial: () => {
+      const match = names.find(n => normalize(n) === normalize(inputEl.value.trim()));
+      if(match) inputEl.value = match;
+    },
+    markInvalid: () => { inputEl.classList.add('invalid'); errEl.style.display = 'block'; },
+    markValid: () => { inputEl.classList.remove('invalid'); errEl.style.display = 'none'; },
+    reset: () => { inputEl.value = ''; state.valid = false; }
+  };
+}
+
+const entregaInput = document.getElementById('entrega');
+const retiraInput = document.getElementById('retira');
+const entregaCombo = createCombo('entrega', 'entregaList', 'err-entrega', ENTREGA_NAMES);
+const retiraCombo = createCombo('retira', 'retiraList', 'err-retira', RETIRA_NAMES);
+/* ---------- fin combobox ---------- */
+
+async function loadLog(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, true);
+    return res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){
+    return [];
+  }
+}
+async function saveLog(entries){
+  try{
+    const res = await window.storage.set(STORAGE_KEY, JSON.stringify(entries), true);
+    return !!res;
+  }catch(e){
+    return false;
+  }
+}
+
+function validate(){
+  let ok = true;
+  const cantidad = document.getElementById('cantidad');
+
+  const cVal = parseInt(cantidad.value, 10);
+  if(!cVal || cVal <= 0){
+    cantidad.classList.add('invalid');
+    document.getElementById('err-cantidad').style.display = 'block';
+    ok = false;
+  } else {
+    cantidad.classList.remove('invalid');
+    document.getElementById('err-cantidad').style.display = 'none';
+  }
+
+  // Validación tipo Excel: el texto debe coincidir EXACTO (sin distinguir may/acentos) con algún nombre del listado
+  if(!entregaCombo.isValid()){
+    entregaCombo.markInvalid();
+    ok = false;
+  } else {
+    entregaCombo.markValid();
+    entregaCombo.normalizeToOfficial(); // respeta tildes/formato oficial
+  }
+
+  if(!retiraCombo.isValid()){
+    retiraCombo.markInvalid();
+    ok = false;
+  } else {
+    retiraCombo.markValid();
+    retiraCombo.normalizeToOfficial();
+  }
+
+  return ok;
+}
+
+document.getElementById('submitBtn').addEventListener('click', async () => {
+  if(!validate()) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = "Guardando…";
+
+  const cantidad = parseInt(document.getElementById('cantidad').value, 10);
+  const entrega = entregaInput.value;
+  const retira = retiraInput.value;
+  const now = new Date();
+  const entry = {
+    producto: PRODUCT_NAME,
+    codigo: PRODUCT_FAMILY,
+    fecha: todayISO(),
+    mes: MESES[now.getMonth()],
+    cantidad, entrega, retira,
+    registrado: now.toISOString()
+  };
+
+  // 1) Envía al flujo de Power Automate -> escribe directo en Excel/SharePoint
+  let flowOk = false;
+  let flowErrorMsg = "";
+  try{
+    const resp = await fetch(POWER_AUTOMATE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" }, // evita el preflight CORS que Power Automate no responde
+      body: JSON.stringify({ cantidad, entrega, retira, secreto: FLOW_SECRET })
+    });
+    flowOk = resp.ok;
+    if(!flowOk){
+      try{
+        const errBody = await resp.json();
+        flowErrorMsg = errBody.error || `Error ${resp.status}`;
+      }catch(e){
+        flowErrorMsg = `Error ${resp.status}`;
+      }
+    }
+  }catch(e){
+    flowErrorMsg = "No se pudo conectar con el flujo (revisa tu conexión a internet).";
+  }
+
+  btn.disabled = false; btn.textContent = "Registrar salida";
+
+  if(!flowOk){
+    showToast(flowErrorMsg || "No se pudo registrar en Excel. Intenta de nuevo.");
+    return;
+  }
+
+  // 2) Respaldo local: solo para el historial rápido dentro de esta app (Excel ya es la fuente real)
+  const log = await loadLog();
+  log.push(entry);
+  await saveLog(log);
+
+  document.getElementById('summaryBox').innerHTML = `
+    <div><span>Producto</span><span>${PRODUCT_NAME}</span></div>
+    <div><span>Cantidad</span><span>${cantidad}</span></div>
+    <div><span>Entrega</span><span>${entrega}</span></div>
+    <div><span>Retira</span><span>${retira}</span></div>
+    <div><span>Fecha</span><span>${todayDisplay()}</span></div>
+  `;
+  document.getElementById('formView').style.display = 'none';
+  document.getElementById('successView').style.display = 'block';
+  renderLog();
+});
+
+document.getElementById('anotherBtn').addEventListener('click', () => {
+  document.getElementById('cantidad').value = '';
+  entregaCombo.reset();
+  retiraCombo.reset();
+  document.getElementById('successView').style.display = 'none';
+  document.getElementById('formView').style.display = 'block';
+});
+
+document.getElementById('toggleAdmin').addEventListener('click', async () => {
+  const panel = document.getElementById('adminPanel');
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open')) await renderLog();
+});
+
+async function renderLog(){
+  const log = await loadLog();
+  const container = document.getElementById('logList');
+  if(log.length === 0){
+    container.innerHTML = '<div class="log-empty">Aún no hay salidas registradas.</div>';
+    return;
+  }
+  const sorted = [...log].sort((a,b) => new Date(b.registrado) - new Date(a.registrado));
+  container.innerHTML = sorted.map(e => `
+    <div class="log-row">
+      <span>${e.fecha} · ${e.cantidad} un.</span>
+      <span class="who">${e.entrega} → ${e.retira}</span>
+    </div>
+  `).join('');
+}
+
+function logToRows(log){
+  // Orden compatible con la hoja SALIDAS: PRODUCTO | FECHA | CANTIDAD | ENTREGA | RETIRA | COSTO UNIT | COSTO TOTAL | MES | CODIGO
+  return log.map(e => [e.producto, e.fecha, e.cantidad, e.entrega, e.retira, "", "", e.mes, e.codigo]);
+}
+
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  const log = await loadLog();
+  if(log.length === 0){ showToast("No hay datos para copiar."); return; }
+  const rows = logToRows(log);
+  const text = rows.map(r => r.join("\t")).join("\n");
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast("Copiado. Pégalo en la hoja SALIDAS de Excel.");
+  }catch(e){
+    showToast("No se pudo copiar automáticamente.");
+  }
+});
+
+document.getElementById('csvBtn').addEventListener('click', async () => {
+  const log = await loadLog();
+  if(log.length === 0){ showToast("No hay datos para exportar."); return; }
+  const header = ["PRODUCTO","FECHA DE SALIDA","CANTIDAD","ENTREGA","RETIRA","Costo Unitario","Costo total","MES","CODIGO"];
+  const rows = logToRows(log);
+  const csv = [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = "salidas_logo_rojo.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+renderLog();
+</script>
+</body>
+</html>
